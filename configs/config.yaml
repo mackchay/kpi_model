@@ -1,0 +1,34 @@
+model:
+  type: RandomForestRegressor
+  n_estimators: 200
+  max_depth: 12
+  random_state: 42
+  min_samples_split: 5
+  min_samples_leaf: 2
+
+data:
+  path: "data/team_kpi_dataset.csv"
+  target: "kpi_score"
+  test_size: 0.2
+  validation_size: 0.1
+  # Features from preprocess.py extract_features_from_project function
+  features:
+    - commits_total
+    - merge_conflicts
+    - bus_factor
+    - refactor_commits
+    - fix_commits
+    - feature_commits
+    - docs_commits
+    - test_commits
+    - refactor_ratio
+    - fix_ratio
+    - feature_ratio
+    - docs_ratio
+    - test_ratio
+    - active_days
+    - team_size
+
+output:
+  individual_model_path: "models/individual_kpi_regressor.pkl"
+  team_model_path: "models/team_kpi_regressor.pkl"
