@@ -1,35 +1,99 @@
 import pandas as pd
 import numpy as np
+from typing import Dict, List
+import random
+from preprocess import extract_features_from_project
+from utils import calculate_kpi
 
-# Количество команд в датасете
-N = 1000
-np.random.seed(42)
+def generate_team_metrics(num_samples: int = 1000) -> pd.DataFrame:
+    """
+    Генерирует синтетические метрики команд для обучения модели KPI,
+    используя структуру данных из preprocess.py.
+    
+    Args:
+        num_samples: Количество образцов для генерации
+        
+    Returns:
+        DataFrame с метриками команд и KPI
+    """
+    
+    data = []
+    
+    for _ in range(num_samples):
+        # Генерируем синтетические данные в формате preprocess.py
+        commits_total = random.randint(50, 500)
+        merge_conflicts = random.randint(0, 20)
+        bus_factor = random.randint(1, 8)
+        
+        # Генерируем коммиты разных типов
+        refactor_commits = random.randint(5, 100)
+        fix_commits = random.randint(10, 150)
+        feature_commits = random.randint(20, 200)
+        docs_commits = random.randint(0, 50)
+        test_commits = random.randint(5, 80)
+        
+        # Вычисляем соотношения
+        total_commits = refactor_commits + fix_commits + feature_commits + docs_commits + test_commits
+        refactor_ratio = refactor_commits / total_commits if total_commits > 0 else 0
+        fix_ratio = fix_commits / total_commits if total_commits > 0 else 0
+        feature_ratio = feature_commits / total_commits if total_commits > 0 else 0
+        docs_ratio = docs_commits / total_commits if total_commits > 0 else 0
+        test_ratio = test_commits / total_commits if total_commits > 0 else 0
+        
+        active_days = random.randint(10, 365)
+        team_size = random.randint(2, 15)
+        
+        # Создаем DataFrame с метриками
+        metrics_df = pd.DataFrame([{
+            'commits_total': commits_total,
+            'merge_conflicts': merge_conflicts,
+            'bus_factor': bus_factor,
+            'refactor_commits': refactor_commits,
+            'fix_commits': fix_commits,
+            'feature_commits': feature_commits,
+            'docs_commits': docs_commits,
+            'test_commits': test_commits,
+            'refactor_ratio': refactor_ratio,
+            'fix_ratio': fix_ratio,
+            'feature_ratio': feature_ratio,
+            'docs_ratio': docs_ratio,
+            'test_ratio': test_ratio,
+            'active_days': active_days,
+            'team_size': team_size
+        }])
+        
+        # Вычисляем KPI используя функцию из utils.py
+        kpi_score = calculate_kpi(metrics_df).iloc[0]
+        
+        data.append({
+            'commits_total': commits_total,
+            'merge_conflicts': merge_conflicts,
+            'bus_factor': bus_factor,
+            'refactor_commits': refactor_commits,
+            'fix_commits': fix_commits,
+            'feature_commits': feature_commits,
+            'docs_commits': docs_commits,
+            'test_commits': test_commits,
+            'refactor_ratio': refactor_ratio,
+            'fix_ratio': fix_ratio,
+            'feature_ratio': feature_ratio,
+            'docs_ratio': docs_ratio,
+            'test_ratio': test_ratio,
+            'active_days': active_days,
+            'team_size': team_size,
+            'kpi_score': kpi_score
+        })
+    
+    return pd.DataFrame(data)
 
-# Генерация случайных данных для признаков
-df = pd.DataFrame({
-    "commits_total": np.random.randint(10, 200, size=N),
-    "merge_conflicts": np.random.randint(0, 20, size=N),
-    "code_review_ratio": np.random.rand(N),
-    "bus_factor": np.random.randint(1, 5, size=N),
-    "avg_commit_size": np.random.uniform(10, 500, size=N),
-    "comment_density": np.random.uniform(0, 1, size=N),
-    "churn_rate": np.random.uniform(0, 0.5, size=N),
-    "workload_balance": np.random.uniform(0, 1, size=N),
-    "refactor_commits": np.random.randint(0, 50, size=N),
-    "active_days": np.random.randint(10, 120, size=N),
-    "team_size": np.random.randint(2, 10, size=N)
-})
-
-# Нормализация признаков для расчёта KPI (только внутри скрипта)
-code_review_norm = (df["code_review_ratio"] - df["code_review_ratio"].min()) / (df["code_review_ratio"].max() - df["code_review_ratio"].min())
-merge_conflicts_norm = (df["merge_conflicts"] - df["merge_conflicts"].min()) / (df["merge_conflicts"].max() - df["merge_conflicts"].min())
-bus_factor_norm = (df["bus_factor"] - df["bus_factor"].min()) / (df["bus_factor"].max() - df["bus_factor"].min())
-
-# Вычисление KPI
-df["kpi_score"] = (0.4 * code_review_norm + 0.3 * merge_conflicts_norm + 0.3 * bus_factor_norm) * 100
-
-# Сохраняем только исходные признаки + kpi_score
-df.to_csv("team_kpi_dataset.csv", index=False)
-
-print("✅ Датасет создан: team_kpi_dataset.csv")
-print(df.head())
+if __name__ == "__main__":
+    # Генерируем датасет
+    df = generate_team_metrics(1000)
+    
+    # Сохраняем в CSV
+    df.to_csv("../data/team_kpi_dataset.csv", index=False)
+    print(f"Generated dataset with {len(df)} samples")
+    print(f"KPI range: {df['kpi_score'].min():.2f} - {df['kpi_score'].max():.2f}")
+    print(f"Mean KPI: {df['kpi_score'].mean():.2f}")
+    print("\nDataset columns:")
+    print(df.columns.tolist())
